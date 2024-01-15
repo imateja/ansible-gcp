@@ -1,0 +1,26 @@
+---
+- name: Deploy Spring PetClinic Application
+  hosts: app_servers
+  become: yes
+
+  vars:
+    artifact_version: "2.4.2" # Update with your artifact version
+    local_artifact_path: "../spring-petclinic/target/spring-petclinic-3.2.0-SNAPSHOT.jar" # Path to JAR on local machine
+    remote_artifact_path: "/tmp/spring-petclinic-{{ artifact_version }}.jar" # Path on the remote server
+
+  tasks:
+    - name: Install Java
+      apt:
+        name: default-jdk
+        state: present
+
+    - name: Copy artifact to remote server
+      copy:
+        src: "{{ local_artifact_path }}"
+        dest: "{{ remote_artifact_path }}"
+
+    - name: Run the application
+      shell: "nohup java -jar {{ remote_artifact_path }} > /dev/null 2>&1 &"
+      async: 45
+      poll: 0
+      become: false
